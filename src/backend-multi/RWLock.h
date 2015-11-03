@@ -1,6 +1,7 @@
 #ifndef RWLock_h
 #define RWLock_h
 #include <iostream>
+#include <queue.h>
 
 class RWLock {
     public:
@@ -18,6 +19,8 @@ class RWLock {
         a la vez. Una vez que su adaptación esté andando DEBEN hacer su propia
         implementación de Read-Write Locks utilizando únicamente Variables de
         Condición. */
+        
+        queue
 
         pthread_rwlock_t rwlock;
 };
