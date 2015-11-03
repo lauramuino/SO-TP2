@@ -11,77 +11,82 @@ Condición. */
 RWLock :: RWLock() {
       
     cant_lectores = 0;
-    cant_escritores = 0;
-    cant_escritores_esperando = 0;
+    hay_escribiendo = false;
+    hay_escritores_esperando = false;
     
 	pthread_mutex_init(&(this->mtx_RWL), NULL);
 	pthread_cond_init(&barrera_lectores, NULL);		
-	pthread_cond_init(&barrera_escritores, NULL);
+	pthread_cond_init(&sem_escritores, NULL);
 
-	
-    //pthread_rwlock_init(&(this->rwlock),NULL);
-    
     
 }
 
 void RWLock :: rlock() {
 	
+	
+	
+	
+	
      pthread_mutex_lock(&mtx_RWL);		//lock de mutex
-     while(cant_escritores > 0){		//si el write tiene prioridad chequeo tambien si cant_escritores_esperando > 0
-		pthread_cond_wait(&barrera_lectores, &mtx_RWL);	//suelta el mutex mientras hace wait
+     
+     //PRIMERO ME FIJO SI YA HABIA ALGUIEN ESPERANDO PARA HACER WRITE
+     while(hay_escritor_esperando){
+		 pthread_cond_wait(&primera_barrera_lectores, &mtx_RWL);
+		 }
+     
+     //AHORA ESPERO A QUE TERMINE DE HACER WRITE
+     while(hay_escribiendo){
+		pthread_cond_wait(&barrera_lectores, &mtx_RWL);			//suelta el mutex mientras hace wait
 		//hay algun thread que esta escribiendo espero
 	}	
-	//si llegue acá es porque no hay nadie escribiendo y me dieron signal desde wunlock;
+	
+	//ACA PASARON TODOS LOS LECTORES HASTA EL ULTIMO WRITE;
 	cant_lectores++;						//aumento la cantidad de lectores
 	pthread_mutex_unlock(&mtx_RWL);			//libero mtx
 	
-	
-    //pthread_rwlock_rdlock(&(this->rwlock));
 }
 
 void RWLock :: wlock() {
-     
-    pthread_mutex_lock(&mtx_RWL);
-    cant_escritores_esperando++;
     
-    while(cant_lectores > 0 || cant_escritores > 0){
-		pthread_cond_wait(&barrera_escritores, &mtx_RWL);
+    pthread_mutex_lock(&mtx_RWL);
+    hay_escritor_esperando = true;	//YO PASO A SER UN ESCRITOR ESPERANDO
+    
+    //SI NO HAY NADIE LEYENDO Y NADIE ESCRIBIENDO PUEDO ESCRBIR YO
+    while(cant_lectores > 0 || hay_escribiendo){
+		pthread_cond_wait(&sem_escritores, &mtx_RWL);
 		//hay threads leyendo o escribiendo
 		}
-	cant_escritores_esperando--;
-    cant_escritores++;					//creo que siempre va a ser 1 o 0, los que estan esperando no suman
+	
+	//NO ESTOY ESPERANDO MAS. AHORA ESTOY ESCRIBIENDO
+	hay_escritor_esperando = false;
+    hay_escribiendo = true;	
+    
     pthread_mutex_unlock(&mtx_RWL);	//libero mtx
+    pthread_cond_broadcast(&primera_barrera_lectores);	//LE DIGO A LOS LECTORES EN LA PRIMERA BARRERA QUE PASEN
     
-    
-    //pthread_rwlock_wrlock(&(this->rwlock));
 }
 
 void RWLock :: runlock() {
 	
 	pthread_mutex_lock(&mtx_RWL);
 	cant_lectores--;
-	if(cant_lectores == 0 && cant_escritores_esperando > 0){
+	if(cant_lectores == 0){
 		//si no hay mas nadie leyendo y hay escritores esperando escribir, despierto alguno de ellos
-		pthread_cond_signal(&barrera_escritores);
+		pthread_cond_signal(&sem_escritores);    //LE DIGO AL SIGUIENTE ESCRITOR QUE PASE
 		}
 		
 	pthread_mutex_unlock(&mtx_RWL);
 	
-//    pthread_rwlock_unlock(&(this->rwlock));
 }
 
 void RWLock :: wunlock() {
 	
 	pthread_mutex_lock(&mtx_RWL);
-	cant_escritores--;
-	
-	if(cant_escritores_esperando > 0){
-		pthread_cond_signal(&barrera_escritores);
-		}
-	//si tienen proridad los escritores: else{broadcast lectores;mutex unlock;}
-	
-	pthread_cond_broadcast(&barrera_lectores);		//doy signal a todos los lectores que estaban esperando
+	hay_escribiendo = false;
 	pthread_mutex_unlock(&mtx_RWL);
 	
-    //pthread_rwlock_unlock(&(this->rwlock));
+ //HAGO SIGNAL A LOS ESCRITORES, Y BROADCAST A LOS LECTORES EN LA ULTIMA BARRERA.
+	pthread_cond_signal(&sem_escritores);
+	pthread_cond_broadcast(&barrera_lectores);		
+	
 }
