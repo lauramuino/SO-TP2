@@ -11,17 +11,16 @@ class RWLock {
         void wunlock();
 
     private:
-        /* IMPORTANTE: Se brinda una implementación básica del Read-Write Locks
-        que hace uso de la implementación provista por pthreads. Está dada para
-        que puedan utilizarla durante la adaptación del backend de mono a multi
-        jugador de modo de poder concentrarse en la resolución de un problema
-        a la vez. Una vez que su adaptación esté andando DEBEN hacer su propia
-        implementación de Read-Write Locks utilizando únicamente Variables de
-        Condición. */
         
+		int cant_lectores;		//la cantidad de lectores leyendo 
+		int cant_escritores;	
+		int cant_escritores_esperando;
+		
+		pthread_mutex_t mtx_RWL;
+		pthread_cond_t barrera_lectores;
+		pthread_cond_t barrera_escritores;
 
-
-        pthread_rwlock_t rwlock;
+        //pthread_rwlock_t rwlock;
 };
 
 #endif

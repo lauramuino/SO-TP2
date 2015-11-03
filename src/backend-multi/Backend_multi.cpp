@@ -17,7 +17,7 @@ vector<vector<char> > tablero_palabras;		// solamente tiene las palabras válida
 
 unsigned int ancho = -1;
 unsigned int alto = -1;
-void* retval;
+//~ void* retval;
 
 
 bool cargar_int(const char* numero, unsigned int& n) {
@@ -357,7 +357,7 @@ void terminar_servidor_de_jugador(int socket_fd, list<Casillero>& palabra_actual
     
     
 //HACE EXIT SOLO EL THREAD QUE TERMINO, EL SERVIDOR NO SE CAE NI LOS OTROS CLIENTES TAMPOCO
-    pthread_exit(retval);
+    pthread_exit(NULL);
 }
 
 
