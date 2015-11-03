@@ -1,8 +1,5 @@
 #include "Backend_multi.h"
-<<<<<<< HEAD
 #include "RWLock.h"
-=======
->>>>>>> 0ae4014502b5409968298b1e08938856d2ad1997
 
 
 using namespace std;
@@ -12,15 +9,15 @@ using namespace std;
 int socket_servidor = -1;
 
 // variables globales del juego
-<<<<<<< HEAD
+
 vector<vector<RWLock> > lock_casilla_posta;
 vector<vector<RWLock> > lock_casilla_temp;
 vector<vector<char> > tablero_letras; 		// tiene letras que aún no son palabras válidas
 vector<vector<char> > tablero_palabras;		// solamente tiene las palabras válidas
-=======
+
 vector<vector<char> > tablero_letras; // tiene letras que aún no son palabras válidas
 vector<vector<char> > tablero_palabras; // solamente tiene las palabras válidas
->>>>>>> 0ae4014502b5409968298b1e08938856d2ad1997
+
 unsigned int ancho = -1;
 unsigned int alto = -1;
 void* retval;
@@ -58,7 +55,7 @@ int main(int argc, const char* argv[]) {
     }
 
     // inicializar ambos tableros, se accede como tablero[fila][columna]
-<<<<<<< HEAD
+
     //inicializamos los dos tableros de lock para protejer cada casilla
     
     tablero_letras = vector<vector<char> >(alto);
@@ -76,7 +73,7 @@ int main(int argc, const char* argv[]) {
         lock_casilla_posta[i] = vector<RWLock>(ancho);
     }
 
-=======
+
     tablero_letras = vector<vector<char> >(alto);
     for (unsigned int i = 0; i < alto; ++i) {
         tablero_letras[i] = vector<char>(ancho, VACIO);
@@ -87,16 +84,8 @@ int main(int argc, const char* argv[]) {
         tablero_palabras[i] = vector<char>(ancho, VACIO);
     }
 
-	//inicializar matriz de mutex  
-	pthread_mutex_t mutex_posicion[ancho][alto]; 
-	for (unsigned int i = 0; i < alto; i++){
-		for (unsigned int j = 0; j < ancho; j++){
-		//primero paso por todo el ancho y luego cambio de fila.
-			pthread_mutex_init(&mutex_posicion[j][i], NULL); 
-			}
-		}
->>>>>>> 0ae4014502b5409968298b1e08938856d2ad1997
-	
+  
+
 	
     int socketfd_cliente, socket_size;
     struct sockaddr_in local, remoto;
@@ -136,11 +125,6 @@ int main(int argc, const char* argv[]) {
 			
 		//Aca se crea un nuevo thread que va a atender la conexion nueva(el jugador nuevo)
 			pthread_create(&thread_id, NULL, atendedor_de_jugador, (void*) nuevo_socket);
-<<<<<<< HEAD
-=======
-			if ((pthread_detach(thread_id)) == -1)
-				perror("haciendo detach");
->>>>>>> 0ae4014502b5409968298b1e08938856d2ad1997
         }
     }
 
@@ -150,13 +134,11 @@ int main(int argc, const char* argv[]) {
 
 
 void* atendedor_de_jugador(void* sock) {
-<<<<<<< HEAD
+
 	
 	//hago que cada thread haga detach
 	pthread_detach(pthread_self());
 	
-=======
->>>>>>> 0ae4014502b5409968298b1e08938856d2ad1997
     // variables locales del jugador
     int socket_fd = *(int*)sock;
     
@@ -185,7 +167,7 @@ void* atendedor_de_jugador(void* sock) {
                 // no es un mensaje LETRA bien formado, hacer de cuenta que nunca llegó
                 continue;
             }
-<<<<<<< HEAD
+
             
             // ficha contiene la nueva letra a colocar
             // verificar si es una posición válida del tablero
@@ -202,14 +184,7 @@ void* atendedor_de_jugador(void* sock) {
                 
                 //DESBLOQUEAMOS ESA CASILLA
                 lock_casilla_temp[ficha.fila][ficha.columna].wunlock();
-                
-=======
-            // ficha contiene la nueva letra a colocar
-            // verificar si es una posición válida del tablero
-            if (es_ficha_valida_en_palabra(ficha, palabra_actual)) {
-                palabra_actual.push_back(ficha);
-                tablero_letras[ficha.fila][ficha.columna] = ficha.letra;
->>>>>>> 0ae4014502b5409968298b1e08938856d2ad1997
+           
                 // OK
                 if (enviar_ok(socket_fd) != 0) {
                     // se produjo un error al enviar. Cerramos todo.
@@ -228,16 +203,12 @@ void* atendedor_de_jugador(void* sock) {
         else if (comando == MSG_PALABRA) {
             // las letras acumuladas conforman una palabra completa, escribirlas en el tablero de palabras y borrar las letras temporales
             for (list<Casillero>::const_iterator casillero = palabra_actual.begin(); casillero != palabra_actual.end(); casillero++) {
-<<<<<<< HEAD
 
 				lock_casilla_posta[casillero->fila][casillero->columna].wlock();
 				//como se modifica el tablero_palabras pido esa casilla para poder meter la letra				
                 tablero_palabras[casillero->fila][casillero->columna] = casillero->letra;
                 //despues de hacerlo desbloqueo la casilla
 				lock_casilla_posta[casillero->fila][casillero->columna].wunlock();
-=======
-                tablero_palabras[casillero->fila][casillero->columna] = casillero->letra;
->>>>>>> 0ae4014502b5409968298b1e08938856d2ad1997
             }
             palabra_actual.clear();
 
@@ -340,7 +311,6 @@ int enviar_tablero(int socket_fd) {
     int pos = 7;
     for (unsigned int fila = 0; fila < alto; ++fila) {
         for (unsigned int col = 0; col < ancho; ++col) {
-<<<<<<< HEAD
 			
 			//hace read block
 			lock_casilla_posta[fila][col].rlock();
@@ -350,11 +320,6 @@ int enviar_tablero(int socket_fd) {
 			
             
             buf[pos] = (letra == VACIO)? '-' : letra;
-           
-=======
-            char letra = tablero_palabras[fila][col];
-            buf[pos] = (letra == VACIO)? '-' : letra;
->>>>>>> 0ae4014502b5409968298b1e08938856d2ad1997
             pos++;
         }
     }
@@ -387,18 +352,12 @@ void cerrar_servidor(int signal) {
 
 void terminar_servidor_de_jugador(int socket_fd, list<Casillero>& palabra_actual) {
     cout << "Se interrumpió la comunicación con un cliente" << endl;
-
-<<<<<<< HEAD
+    
 	quitar_letras(palabra_actual);
 
     close(socket_fd);
 
     
-=======
-    close(socket_fd);
-
-    quitar_letras(palabra_actual);
->>>>>>> 0ae4014502b5409968298b1e08938856d2ad1997
     
 //HACE EXIT SOLO EL THREAD QUE TERMINO, EL SERVIDOR NO SE CAE NI LOS OTROS CLIENTES TAMPOCO
     pthread_exit(retval);
@@ -407,7 +366,6 @@ void terminar_servidor_de_jugador(int socket_fd, list<Casillero>& palabra_actual
 
 void quitar_letras(list<Casillero>& palabra_actual) {
     for (list<Casillero>::const_iterator casillero = palabra_actual.begin(); casillero != palabra_actual.end(); casillero++) {
-<<<<<<< HEAD
 		
 		//hace write lock
 		lock_casilla_temp[casillero->fila][casillero->columna].wlock();
@@ -415,9 +373,6 @@ void quitar_letras(list<Casillero>& palabra_actual) {
 		lock_casilla_temp[casillero->fila][casillero->columna].wunlock();
 		//hace write unlock
 		
-=======
-        tablero_letras[casillero->fila][casillero->columna] = VACIO;
->>>>>>> 0ae4014502b5409968298b1e08938856d2ad1997
     }
     palabra_actual.clear();
 }
@@ -431,18 +386,13 @@ bool es_ficha_valida_en_palabra(const Casillero& ficha, const list<Casillero>& p
 
     // si el casillero está ocupado, tampoco es válida
     if (tablero_letras[ficha.fila][ficha.columna] != VACIO) {
-<<<<<<< HEAD
 		//si no voy a escribir nada, desbloqueo
 		lock_casilla_temp[ficha.fila][ficha.columna].wunlock();
         //***************write unlock*************
         return false;
     }
-    
-=======
-        return false;
-    }
 
->>>>>>> 0ae4014502b5409968298b1e08938856d2ad1997
+
     if (palabra_actual.size() > 0) {
         // no es la primera letra de la palabra, ya hay fichas colocadas para esta palabra
         Casillero mas_distante = casillero_mas_distante_de(ficha, palabra_actual);
@@ -461,7 +411,7 @@ bool es_ficha_valida_en_palabra(const Casillero& ficha, const list<Casillero>& p
             int paso = distancia_horizontal / abs(distancia_horizontal);
             for (unsigned int columna = mas_distante.columna; columna != ficha.columna; columna += paso) {
                 // el casillero DEBE estar ocupado en el tablero de palabras
-<<<<<<< HEAD
+
                 //read lock
                 lock_casilla_posta[ficha.fila][columna].rlock();
                 if (!(puso_letra_en(ficha.fila, columna, palabra_actual)) && tablero_palabras[ficha.fila][columna] == VACIO) {
@@ -471,11 +421,6 @@ bool es_ficha_valida_en_palabra(const Casillero& ficha, const list<Casillero>& p
                 }
                 lock_casilla_posta[ficha.fila][columna].runlock();
                 //no se cumplio cond, hago read unlock
-=======
-                if (!(puso_letra_en(ficha.fila, columna, palabra_actual)) && tablero_palabras[ficha.fila][columna] == VACIO) {
-                    return false;
-                }
->>>>>>> 0ae4014502b5409968298b1e08938856d2ad1997
             }
 
         } else if (distancia_horizontal == 0) {
@@ -490,7 +435,6 @@ bool es_ficha_valida_en_palabra(const Casillero& ficha, const list<Casillero>& p
             int paso = distancia_vertical / abs(distancia_vertical);
             for (unsigned int fila = mas_distante.fila; fila != ficha.fila; fila += paso) {
                 // el casillero DEBE estar ocupado en el tablero de palabras
-<<<<<<< HEAD
                 //read lock
                 lock_casilla_posta[fila][ficha.columna].rlock();
                 if (!(puso_letra_en(fila, ficha.columna, palabra_actual)) && tablero_palabras[fila][ficha.columna] == VACIO) {
@@ -500,11 +444,6 @@ bool es_ficha_valida_en_palabra(const Casillero& ficha, const list<Casillero>& p
                 }
                 lock_casilla_posta[fila][ficha.columna].runlock();
                 //no se cumplio cond, read unlock
-=======
-                if (!(puso_letra_en(fila, ficha.columna, palabra_actual)) && tablero_palabras[fila][ficha.columna] == VACIO) {
-                    return false;
-                }
->>>>>>> 0ae4014502b5409968298b1e08938856d2ad1997
             }
         }
         else {
