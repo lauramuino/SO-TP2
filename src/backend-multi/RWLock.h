@@ -1,7 +1,6 @@
 #ifndef RWLock_h
 #define RWLock_h
 #include <iostream>
-#include <queue.h>
 
 class RWLock {
     public:
@@ -20,7 +19,7 @@ class RWLock {
         implementación de Read-Write Locks utilizando únicamente Variables de
         Condición. */
         
-        queue
+
 
         pthread_rwlock_t rwlock;
 };

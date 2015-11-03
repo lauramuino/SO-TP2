@@ -15,9 +15,6 @@ vector<vector<RWLock> > lock_casilla_temp;
 vector<vector<char> > tablero_letras; 		// tiene letras que aún no son palabras válidas
 vector<vector<char> > tablero_palabras;		// solamente tiene las palabras válidas
 
-vector<vector<char> > tablero_letras; // tiene letras que aún no son palabras válidas
-vector<vector<char> > tablero_palabras; // solamente tiene las palabras válidas
-
 unsigned int ancho = -1;
 unsigned int alto = -1;
 void* retval;
