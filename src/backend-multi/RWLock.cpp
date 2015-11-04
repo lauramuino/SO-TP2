@@ -12,10 +12,11 @@ RWLock :: RWLock() {
       
     cant_lectores = 0;
     hay_escribiendo = false;
-    hay_escritores_esperando = false;
+    hay_escritor_esperando = false;
     
 	pthread_mutex_init(&(this->mtx_RWL), NULL);
 	pthread_cond_init(&barrera_lectores, NULL);		
+	pthread_cond_init(&primera_barrera_lectores, NULL);		
 	pthread_cond_init(&sem_escritores, NULL);
 
     

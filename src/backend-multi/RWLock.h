@@ -14,12 +14,13 @@ class RWLock {
         
 		int cant_lectores;		//la cantidad de lectores leyendo 
 		bool hay_escribiendo;	
-		bool hay_escritores_esperando;
+		bool hay_escritor_esperando;
 		
 		pthread_mutex_t mtx_RWL;
 		pthread_cond_t barrera_lectores;
+		pthread_cond_t primera_barrera_lectores;
 		pthread_cond_t sem_escritores;
-
+		
 };
 
 #endif
