@@ -13,8 +13,9 @@ RWLock :: RWLock() {
     cant_lectores = 0;
     hay_escribiendo = false;
     hay_escritor_esperando = false;
+    lectores_esperando = false;
     
-	pthread_mutex_init(&(this->mtx_RWL), NULL);
+	pthread_mutex_init(&mtx_RWL, NULL);
 	pthread_cond_init(&barrera_lectores, NULL);		
 	pthread_cond_init(&primera_barrera_lectores, NULL);		
 	pthread_cond_init(&sem_escritores, NULL);
@@ -23,10 +24,6 @@ RWLock :: RWLock() {
 }
 
 void RWLock :: rlock() {
-	
-	
-	
-	
 	
      pthread_mutex_lock(&mtx_RWL);		//lock de mutex
      
@@ -37,6 +34,7 @@ void RWLock :: rlock() {
      
      //AHORA ESPERO A QUE TERMINE DE HACER WRITE
      while(hay_escribiendo){
+		 lectores_esperando = true;
 		pthread_cond_wait(&barrera_lectores, &mtx_RWL);			//suelta el mutex mientras hace wait
 		//hay algun thread que esta escribiendo espero
 	}	
@@ -50,10 +48,11 @@ void RWLock :: rlock() {
 void RWLock :: wlock() {
     
     pthread_mutex_lock(&mtx_RWL);
-    hay_escritor_esperando = true;	//YO PASO A SER UN ESCRITOR ESPERANDO
+   
     
     //SI NO HAY NADIE LEYENDO Y NADIE ESCRIBIENDO PUEDO ESCRBIR YO
     while(cant_lectores > 0 || hay_escribiendo){
+		hay_escritor_esperando = true;	//YO PASO A SER UN ESCRITOR ESPERANDO
 		pthread_cond_wait(&sem_escritores, &mtx_RWL);
 		//hay threads leyendo o escribiendo
 		}
@@ -73,11 +72,11 @@ void RWLock :: runlock() {
 	cant_lectores--;
 	if(cant_lectores == 0){
 		//si no hay mas nadie leyendo y hay escritores esperando escribir, despierto alguno de ellos
+		lectores_esperando = false;
 		pthread_cond_signal(&sem_escritores);    //LE DIGO AL SIGUIENTE ESCRITOR QUE PASE
 		}
-		
-	pthread_mutex_unlock(&mtx_RWL);
 	
+	pthread_mutex_unlock(&mtx_RWL);
 }
 
 void RWLock :: wunlock() {
@@ -86,8 +85,10 @@ void RWLock :: wunlock() {
 	hay_escribiendo = false;
 	pthread_mutex_unlock(&mtx_RWL);
 	
- //HAGO SIGNAL A LOS ESCRITORES, Y BROADCAST A LOS LECTORES EN LA ULTIMA BARRERA.
-	pthread_cond_signal(&sem_escritores);
-	pthread_cond_broadcast(&barrera_lectores);		
+ // BROADCAST A LOS LECTORES EN LA ULTIMA BARRERA.
+ 	pthread_cond_broadcast(&barrera_lectores);		
+ // SI HAY ESCRITORES ESPERANDO Y NO HAY MAS LECTORES, LE MANDO SINGAL AL SEM PORQUE NO SE HACE DESDE RUNLOCK	
+ 	if(hay_escritor_esperando && !lectores_esperando) pthread_cond_signal(&sem_escritores);
+	
 	
 }
