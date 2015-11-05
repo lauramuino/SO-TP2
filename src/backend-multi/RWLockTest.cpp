@@ -7,104 +7,107 @@
 
 struct timespec timR, timW;
 
-
-
-
-int i = 0;
 int readers = 0;
 int writers = 0;
 
 int valor = 0;
-int veces = 0;
 RWLock lock_valor;
-unsigned int usecs = 1;
-
 
 pthread_mutex_t mut;
 pthread_cond_t barrera;
 bool todos_creados = false;
 
 void* lector(void * arg){
-	pthread_detach(pthread_self());
-	
+	//++++++++++++++ACA CREAMOS UNA BARRERA PARA QUE TODOS LOS THREADS ESPEREN A QUE SEAN TODOS CREADOS
 	pthread_mutex_lock(&mut);
 	while(!todos_creados){
 		pthread_cond_wait(&barrera, &mut);
 		}
+
 	pthread_mutex_unlock(&mut);
-	for(int i =0; i< 2; i++){
-		lock_valor.rlock();	
-		printf ("leo valor:%d\n", valor);
-		lock_valor.runlock();
-		nanosleep(&timR, NULL);
-	}
+	//++++++++++++++++++++++++++++
+	
+	int yo = (int)(long)arg;
+	lock_valor.rlock();
+	printf ("leo valor:%d mi tid:%d\n", valor, yo );
+	lock_valor.runlock();
+	
+		
 	pthread_exit(NULL);
 	return NULL;
 }
 
 void* escritor(void * arg){
-	pthread_detach(pthread_self());	
-	
-	
+	//++++++++++++++++++++++++++++BARRERA
 	pthread_mutex_lock(&mut);
 	while(!todos_creados){
 		pthread_cond_wait(&barrera, &mut);
 		}
 	pthread_mutex_unlock(&mut);
+	//++++++++++++++++++++++++++++
+	lock_valor.wlock();
 	
-	for(int i=0; i < 2; i++){
-		lock_valor.wlock();
-		printf("Cambio valor\n");
-		valor++;
-		lock_valor.wunlock();
-		nanosleep(&timW, NULL);	
-	}
+	int yo = (int)(long)arg;
+	printf("Cambio valor, mi tid: %d\n", yo);
+	valor++;
+	
+	nanosleep(&timW, NULL);
+	lock_valor.wunlock();
+			
+	
 	
 	pthread_exit(NULL);
 	return NULL;
 }
 
 int main(int argc, char* argv[]) {
-
+//INICIALIZAMOS VC Y MUTEX
 	pthread_mutex_init(&mut, NULL);
 	pthread_cond_init(&barrera, NULL);
 	
 	timR.tv_sec = 0;
-	timR.tv_nsec = 100;
-	
+	timR.tv_nsec = 500;
+	//ES PARA USA EL NANOSLEEP
 	timW.tv_sec = 0;
-	timW.tv_nsec = 10;
+	timW.tv_nsec = 1;
 
     /* Implementar */
     if (argc < 3) {
         fprintf(stderr, "Faltan argumentos, la forma de uso es: %s R W ------ \n R = cantidad de readers, W = cantidad de writers\n", argv[0]);
         return 3;
 	}
-
+	
+	//BAJO ARGUMENTOS	
 	readers = atoi(argv[1]);
 	writers = atoi(argv[2]);
+	
+	
+	int cant_threads = writers + readers;
+	pthread_t  thread[cant_threads];		//ACA GUARDAMOS LOS THREAD ID
 
-	for (i = 0; i< readers; i++){
-		pthread_t thread_id;
-		pthread_create(&thread_id, NULL, lector, NULL);
-		
-	}
-	for (i = 0; i< writers; i++){
-		pthread_t thread_id;
-		pthread_create(&thread_id, NULL, escritor, NULL);
+//SE CREAN TODOS LOS LECTORES Y ESCRITORES
+	for(long i = 0; i < (long)cant_threads;  i++){
+		if( i <(long) writers){ 
+			pthread_create(&thread[i], NULL, escritor, (void *)i);
+		}else{
+			pthread_create(&thread[i], NULL, lector, (void *)i);
+		}
 	}
 	
 	printf("ya estan todos creados\n\n");
 
-	
+//ESPERO UN CACHITO
 	sleep(2);
 	pthread_mutex_lock(&mut);
-	todos_creados = true;
+	todos_creados = true;		//CAMBIA LA CONDICION 
 	pthread_mutex_unlock(&mut);
+	
+	
+	
 	//DESPERTAMOS TODOS LOS THREADS EN BARRERA
 	pthread_cond_broadcast(&barrera);
-	for(int i = 0; i < 10; i++){
-		sleep(1);
+	for(int i = 0; i < cant_threads; i++){
+		pthread_join(thread[i], NULL);			//CON ESTO HACEMOS QUE EL THREAD "PRINCIPAL" ESPERE A QUE TERMINEN TODOS LOS THREADS
 		}
 	return 0;
 }
