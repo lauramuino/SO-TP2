@@ -88,7 +88,8 @@ void RWLock :: wunlock() {
  // BROADCAST A LOS LECTORES EN LA ULTIMA BARRERA.
  	pthread_cond_broadcast(&barrera_lectores);		
  // SI HAY ESCRITORES ESPERANDO Y NO HAY MAS LECTORES, LE MANDO SINGAL AL SEM PORQUE NO SE HACE DESDE RUNLOCK	
- 	if(hay_escritor_esperando && !lectores_esperando) pthread_cond_signal(&sem_escritores);
+	pthread_cond_signal(&sem_escritores);
+ 	//if(hay_escritor_esperando) pthread_cond_signal(&sem_escritores);
 	
 	
 }
