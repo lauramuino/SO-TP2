@@ -378,7 +378,9 @@ void quitar_letras(list<Casillero>& palabra_actual) {
 bool es_ficha_valida_en_palabra(const Casillero& ficha, const list<Casillero>& palabra_actual) {
     // si está fuera del tablero, no es válida
     if (ficha.fila < 0 || ficha.fila > alto - 1 || ficha.columna < 0 || ficha.columna > ancho - 1) {
+		lock_casilla_temp[ficha.fila][ficha.columna].wunlock();
         return false;
+        
     }
 
     // si el casillero está ocupado, tampoco es válida
@@ -401,6 +403,7 @@ bool es_ficha_valida_en_palabra(const Casillero& ficha, const list<Casillero>& p
             for (list<Casillero>::const_iterator casillero = palabra_actual.begin(); casillero != palabra_actual.end(); casillero++) {
                 if (ficha.fila - casillero->fila != 0) {
                     // no están alineadas horizontalmente
+               		lock_casilla_temp[ficha.fila][ficha.columna].wunlock();
                     return false;
                 }
             }
@@ -414,6 +417,7 @@ bool es_ficha_valida_en_palabra(const Casillero& ficha, const list<Casillero>& p
                 if (!(puso_letra_en(ficha.fila, columna, palabra_actual)) && tablero_palabras[ficha.fila][columna] == VACIO) {
 					lock_casilla_posta[ficha.fila][columna].runlock();
 					//se cumplio cond, hago read unlock
+					lock_casilla_temp[ficha.fila][ficha.columna].wunlock();
                     return false;
                 }
                 lock_casilla_posta[ficha.fila][columna].runlock();
@@ -425,6 +429,7 @@ bool es_ficha_valida_en_palabra(const Casillero& ficha, const list<Casillero>& p
             for (list<Casillero>::const_iterator casillero = palabra_actual.begin(); casillero != palabra_actual.end(); casillero++) {
                 if (ficha.columna - casillero->columna != 0) {
                     // no están alineadas verticalmente
+                    lock_casilla_temp[ficha.fila][ficha.columna].wunlock();
                     return false;
                 }
             }
@@ -436,6 +441,7 @@ bool es_ficha_valida_en_palabra(const Casillero& ficha, const list<Casillero>& p
                 lock_casilla_posta[fila][ficha.columna].rlock();
                 if (!(puso_letra_en(fila, ficha.columna, palabra_actual)) && tablero_palabras[fila][ficha.columna] == VACIO) {
 					lock_casilla_posta[fila][ficha.columna].runlock();
+					lock_casilla_temp[ficha.fila][ficha.columna].wunlock();
 					//se cumplio cond, read unlock
                     return false;
                 }
@@ -445,6 +451,7 @@ bool es_ficha_valida_en_palabra(const Casillero& ficha, const list<Casillero>& p
         }
         else {
             // no están alineadas ni horizontal ni verticalmente
+            lock_casilla_temp[ficha.fila][ficha.columna].wunlock();
             return false;
         }
     }

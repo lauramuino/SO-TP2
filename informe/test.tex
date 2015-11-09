@@ -1,0 +1,19 @@
+\section{Test RWLock}
+Para comprobar el correcto funcionamiento de las funciones de lectura/escritura bloqueantes para threads, se realizó un programa con el
+obejtivo de simular varios pedidos de lectura y escritura en forma concurrente sobre un mismo recurso.
+La idea era ver que la implementación se enctontrara libre de inanición y que ningún thread pueda compartir la sección crítica.
+Entonces, la función $main$ se encarga de la creación de todos los threads lectores y escritores. A su vez cada thread creado va a esperar en una barrera
+hasta que terminen de crearse todos los restantes, esto es para evitar que bien se creen ya pida el acceso exclusivo a la variable.
+Una vez creados, el thread principal hace broadcast de esa barrera para que pueden empezar a disputarse el control sobre RWlock. 
+Luego de esto el thread principal se queda esperando a que todos los threads terminen, esto se hace mediante la función $pthread\_join$.
+\\
+Cada escritor va a, una vez que obtenga el acceso exclusivo, incrementar en uno la variable protegida. y va a imprimir por pantalla que realizó efectivamente
+el cambio, y su $thread\_id$.
+\\
+Cada lector va a impirmir el contenido de esa variable, y también su $thread\_id$.
+\\
+Para corroborar el comportamiento, se espera que:
+\begin{itemize}
+\item{la cantidad de lectores y escritores que se pasen por parámetros sean igual a la cantidad de threads que escribieron y leyeron la variable.}
+\item{que no haya mas de un thread en la sección crítica, es decir, o se modifica o se lee y una vez que se modifica el valor es uno mas que el anterior.}
+\end{itemize}

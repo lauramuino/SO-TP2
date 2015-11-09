@@ -29,7 +29,7 @@ void* lector(void * arg){
 	
 	int yo = (int)(long)arg;
 	lock_valor.rlock();
-	printf ("leo valor:%d mi tid:%d\n", valor, yo );
+	printf ("mi tid---->%d leo valor:%d\n", yo, valor );
 	lock_valor.runlock();
 	
 		
@@ -48,8 +48,9 @@ void* escritor(void * arg){
 	lock_valor.wlock();
 	
 	int yo = (int)(long)arg;
-	printf("Cambio valor, mi tid: %d\n", yo);
+	printf("mi tid---->%d Cambio valor\n", yo);
 	valor++;
+	
 	
 	nanosleep(&timW, NULL);
 	lock_valor.wunlock();
@@ -97,7 +98,7 @@ int main(int argc, char* argv[]) {
 	printf("ya estan todos creados\n\n");
 
 //ESPERO UN CACHITO
-	sleep(2);
+	//~ sleep(2);
 	pthread_mutex_lock(&mut);
 	todos_creados = true;		//CAMBIA LA CONDICION 
 	pthread_mutex_unlock(&mut);

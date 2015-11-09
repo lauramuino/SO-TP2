@@ -15,7 +15,7 @@
 \usepackage{calc}
 \usepackage{amsmath, amsthm, amssymb}
 \usepackage{amsfonts}
-%\lstset{language=C}
+%~ \lstset{language=C++}
 \definecolor{gray}{gray}{0.5}
 \definecolor{light-gray}{gray}{0.95}
 \definecolor{orange}{rgb}{1,0.5,0}
@@ -73,8 +73,8 @@
 \thispagestyle{empty}
 \materia{Sistemas Operativos}
 \submateria{Segundo Cuatrimestre de 2015}
-\titulo{Trabajo Práctico II}
-\subtitulo{PThreads}
+\titulo{Trabajo Práctico II - Threads}
+\subtitulo{Scrabble Hasobro}
 \integrante{Arístides Catalano}{279/10}{dilbert_cata@hotmail.com}
 \integrante{Laura Muiño}{399/11}{mmuino@dc.uba.ar}
 \integrante{Jorge Quintana}{344/11}{jorge.quintana.81@gmail.com}
@@ -89,6 +89,7 @@
 
 \thispagestyle{empty}
 \vspace{3cm}
+
 \tableofcontents
 \newpage
 
@@ -100,14 +101,22 @@
 {\end{list} }
 
 %\normalsize
-\newpage
+
 
 % -------------------------------------------------------
 % Ejercicio 
 % -------------------------------------------------------
-%\input{}
+\newpage
+\input{multi.tex}
 
+\newpage
+\input{sincronizacion.tex}
 
+\newpage
+\input{rwlock.tex}
+
+\newpage
+\input{test.tex}
 
 \newpage
 \bibliographystyle{plain}

@@ -1,0 +1,85 @@
+\section{Servidor Multi}
+
+Para crear un servidor que soporte mútiples jugadores, se adaptó el backend-mono provisto por la cátedra.
+El primer cambio es permitir que atienda mas de una conexión. Para esto se utilizan $threads$. La idea es que cada vez que un cliente se conecte al servidor,
+se cree un thread nuevo que va a atenderlo hasta que termine de jugar, y luego de eso terminará exitosamente. 
+Otro problema a solucionar es la sincronización entre threads, ya que ahora van a estar compartiendo el tablero, y "compitiendo" por cada casilla para
+poder leer y escribir.Por otro lado, se desea no perder demasiada concurrencia en el juego, es decir, que deberian poder modificar simultáneamente dos posiciones
+distintas de las tableros simultáneamente, sin tener problemas.  
+
+A continuación se muestran brevemente los cambios realizados.
+Las variables globales utilizadas son:
+\lstset{language=C,
+	basicstyle=\ttfamily,
+	keywordstyle=\color{blue}\ttfamily,
+	stringstyle=\color{red}\ttfamily,
+	commentstyle=\color{red}\ttfamily%,
+	%morecomment=[1][\color{magenta}]{\#}
+}
+\begin{lstlisting}
+
+int socket_servidor = -1;
+
+//matriz de locks para proteger cada casilla del tablero_palabras
+vector<vector<RWLock> > lock_casilla_posta;	
+
+//matriz de locks para proteger cada casilla del tablero_letras
+vector<vector<RWLock> > lock_casilla_temp;	
+
+// tiene letras que aun no son palabras validas
+vector<vector<char> > tablero_letras; 		
+// solamente tiene las palabras validas
+vector<vector<char> > tablero_palabras;		
+
+unsigned int ancho = -1;
+unsigned int alto = -1;
+\end{lstlisting}
+Estas se inicializan en la función main, una vez que se obtienen los valores de alto, y ancho del tablero. 
+
+
+Aqui un fragmento de código de backend-multi.cpp:
+
+\lstset{language=C,
+	basicstyle=\ttfamily,
+	keywordstyle=\color{blue}\ttfamily,
+	stringstyle=\color{red}\ttfamily,
+	commentstyle=\color{red}\ttfamily%,
+	%morecomment=[1][\color{magenta}]{\#}
+}
+\begin{lstlisting}
+
+while (true) {
+    if ((socketfd_cliente = accept(socket_servidor, (struct sockaddr*) &remoto,
+					(socklen_t*) &socket_size)) == -1)
+        cerr << "Error al aceptar conexion" << endl;
+    else {
+		int* nuevo_socket = new int;
+		*nuevo_socket = socketfd_cliente;
+		pthread_t thread_id;	
+			
+//Aca se crea un nuevo thread que va a atender la conexion nueva(el jugador nuevo)
+		pthread_create(&thread_id, NULL, atendedor_de_jugador,
+					(void*) nuevo_socket);
+    }
+}
+\end{lstlisting}
+\\
+
+La función $pthread\_create$ se encarga de crear un thread nuevo, el cual va empezar su ejecución en la función $atendedor\_de\_jugador$, y se le pasa el argumento
+$nuevo\_socket$, que contiene el file descriptor del socket del nuevo cliente.
+
+El thread principal, que es el servidor, se va a quedar escuchando conexiones entrantes de nuevos jugadores y se va a encargar de crear los threads. 
+\\
+Una vez creado el thread, comienza a ejecutar en la función $atendedor\_de\_jugador$. Lo primero que ejecuta es la función $pthread\_detach(pthread\_self())$, 
+Esto hace que cuando el thread termine y haga exit, devuelva todos los recursos ultilizados, sin necesidad de que el thread principal haga join con el que
+esta terminando.
+Luego se obtiene el numero de socket del cliente que esta atendiendo ese thread para poder realizar el envío de mensajes con el servidor.
+Finalmente, cuando el cliente elija terminar el juego, se llamará a la función $terminar\_servidor\_de\_jugador$, la cual cierra el socket del cliente terminado,
+libera los casilleros del $tablero\_letras$ que pudiera estar utilizando, y llama a la función $pthread\_exit$, que termina el thread de manera exitosa.
+\\ 
+\\
+\\
+NOTA: cuando el servidor termina, tambien cierra su socket y hace exit. Sería mas adecuado que cierre los sockets de todos los clientes que estan corriendo
+y ver que terminen exitosamente. Esto no afecta el funcionamiento del juego.
+
+

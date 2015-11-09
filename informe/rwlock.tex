@@ -1,0 +1,72 @@
+\section{Implementación RWLock}
+Se pidió realizar la implementación de la clase RWLock, que provee funciones lectura y escritura bloqueantes. 
+Para hacerlo, se utilizaron Varibles de Condición POSIX. para poder garantizar con ellas el acceso exclusivo y la no inanición.
+Se pasará a describir brevemente cada función.
+\begin{itemize}
+\item{\textbf{RWLock: }Se encarga de inicializar las variables globales que van a utilizar todas la funciones de la clase.}
+
+\lstset{language=C,
+	basicstyle=\ttfamily,
+	keywordstyle=\color{blue}\ttfamily,
+	stringstyle=\color{red}\ttfamily,
+	commentstyle=\color{red}\ttfamily
+}
+\begin{lstlisting}
+
+cant_lectores = 0;
+hay_escribiendo = false;
+hay_escritor_esperando = false;
+    
+pthread_mutex_init(&mtx_RWL, NULL);
+pthread_cond_init(&barrera_lectores, NULL);		
+pthread_cond_init(&primera_barrera_lectores, NULL);		
+pthread_cond_init(&sem_escritores, NULL);
+	
+\end{lstlisting}
+
+\item{\textbf{rlock: }}Cuando un thread llame a la función $rlock$, lo primero que va a hacer es 
+\begin{lstlisting}
+	
+pthread_mutex_lock(&mtx_RWL);
+     
+while(hay_escritor_esperando){
+	pthread_cond_wait(&primera_barrera_lectores, &mtx_RWL);
+}
+\end{lstlisting}
+Toma el mutex, y se queda esperando en la $primera\_barrera\_lectores$, si es que hay algún escritor esperando. Esto es para que se respete le orden 
+de llegada de los pedidos de lectura y escritura. Una vez que el thread que estaba esperando para escribir logra obtener el lock, manda un signal a todos
+los lectores que estaba en la $primera\_barrera\_lectores$.
+Luego los lectores deben chequear si hay alguien escribiendo en ese momento.
+\begin{lstlisting}
+while(hay_escribiendo){
+	pthread_cond_wait(&barrera_lectores, &mtx_RWL);
+}	
+\end{lstlisting}
+Si habia alguno el thread hace wait, sino no entra en el $while$, y aumenta en uno la $cant\_lectores$. Finalmente desbloquea el mutex.
+
+\item{\textbf{wlock: }}Cuando un thread quiere escribir, va a llamar a esta función. 
+\begin{lstlisting}
+pthread_mutex_lock(&mtx_RWL);
+
+while(cant_lectores > 0 || hay_escribiendo){
+	hay_escritor_esperando = true;	//YO PASO A SER UN ESCRITOR ESPERANDO
+	pthread_cond_wait(&sem_escritores, &mtx_RWL);
+}
+\end{lstlisting}
+Lo que hace es esperar a que no haya nadie leyendo ni escribiendo para poder tener el acceso exclusivo.
+Una vez que logra obetenerlo, actualiza las variables, suelta el mutex y hace broadcast a todos los lectores que estaba esperando en la
+$primera\_barrera\_lectores$.
+\begin{lstlisting}
+hay_escritor_esperando = false;
+hay_escribiendo = true;	
+
+pthread_mutex_unlock(&mtx_RWL);
+pthread_cond_broadcast(&primera_barrera_lectores);
+\end{lstlisting}
+
+\item{\textbf{runlock: }}Resta uno en la cant\_lectores y si es igual a 0, hace un signal al escritor que este esperando en \&sem\_escritores. 
+
+\item{\textbf{wunlock: }}Pone $hay\_escribiendo = false$ y hace broadcast a todos los lectores esperando en $barrera\_lectores$ y hace signal a \&sem\_escritores.
+\end{itemize}
+Cada vez que se modifica una variable global, se pide el mutex.
+

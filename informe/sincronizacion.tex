@@ -1,0 +1,32 @@
+\section{Sincronización}
+Para poder permitir la concurrencia entre jugadores, se utilizó la clase RWLock, que permite hacer lecturas simultáneas y escrituras exclusivas.
+La idea de crear una matriz de estas estructuras, es protejer cada casilla por separado, permitiendo asi, modificar o leer, mas de una a la vez por distintos
+threads.
+\\
+Entonces, cada vez que potencialmente se vaya a modificar algun casillero de algun tablero, se llama a la funcion $wlock$, que bloquea ese casillero,
+sin permitir que ningun otro thread pueda ni siquiera leerlo. La funcion $rlock$ si va a permitir lecturas concurrentes.
+\\
+\\
+En la función $atendedor\_de\_jugador$, se recibe la ficha, y la poscicion donde se quiere ubicar a la misma. A partir de ahí comienza a chequear,
+si la posicón es válida, si está libre, etc.
+Antes de realizar la consulta $es\_ficha\_valida\_en\_palabra$ se bloquea dicho casillero con $wlock$, ya que de ser válida, se podrá escribir en ese lugar, y
+recién ahí se podrá desbloquear para garantizar el acceso exclusivo a esa pos.
+\\
+\\
+\\
+
+
+Dentro de la función $es\_ficha\_valida\_en\_palabra$, se chequea que la poscición en la que se desa ubicar la letra sea válida, es decir, que esté dentro
+del tablero, que no está ocupada, que si no es la primera letra de la $palabra\_actual$ sea solo vertical o solo horizontal, y que, si hay espacio entre
+la letra anterior y la que estoy poniendo, ese espacio esta ocupado por otras letras en el $tablero\_palabras$. Es decir, esta usando letras de otra palabra ya
+escrita en el tablero. 
+En cualquier caso que no cumpla las condiciones, se debe desbloquear esa posicion del $tablero\_letras$, osea hacer $wunlock$ en la matriz $lock\_casilla\_temp[f][c]$.
+Si se cumplieran todas la condiciones, entonces la letra puede escribirse en esa pos, por lo que se libera el lock, despues de modificarla.
+Cuando se realizan los chequeos de los casilleros del $tablero\_palabras$, se realizan $rlock$, ya que como no se vana  modficar, esto permita que varios threads
+puedan leer ese valor. Una vez que se termina de acceder, se hace $runlock$, para desbloquearlo.
+Básicamente se bloquean las casillas cada vez se quiere hacer una escritura o una lectura.
+En la funcione $enviar\_tablero$, se hace $rlock$ sobre lock\_casilla\_temp ya que varios jugadores pueden estar actualizando el tablero a la vez.
+En $quitar\_letras$, se modifica el $tablero\_letras$ entoces se hace $wlock$ sobre lock\_casilla\_temp y en $atendedor\_de\_jugador$ cuando se recibe el commando MSG\_PALABRA, copia la $palabra\_actual$ en el 
+$tablero\_palabras$, para esto hacemos $wrlock$ sobre lock\_casilla\_posta. Luego de hacer la lectura o escritura, de libera la casilla haciendo el unlock correspondiente.
+
+
