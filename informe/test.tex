@@ -17,3 +17,41 @@ Para corroborar el comportamiento, se espera que:
 \item{la cantidad de lectores y escritores que se pasen por parámetros sean igual a la cantidad de threads que escribieron y leyeron la variable.}
 \item{que no haya mas de un thread en la sección crítica, es decir, o se modifica o se lee y una vez que se modifica el valor es uno mas que el anterior.}
 \end{itemize}
+
+\\
+Se realizó un ejemplo pequeño, creando 20 lectores y 5 escritores. El resultado obtenido es el siguiente:
+
+\begin{lstlisting}
+ya estan todos creados
+
+mi tid---->0 Cambio valor
+mi tid---->1 Cambio valor
+mi tid---->5 leo valor:2
+mi tid---->6 leo valor:2
+mi tid---->3 Cambio valor
+mi tid---->13 leo valor:3
+mi tid---->8 leo valor:3
+mi tid---->15 leo valor:3
+mi tid---->7 leo valor:3
+mi tid---->16 leo valor:3
+mi tid---->17 leo valor:3
+mi tid---->18 leo valor:3
+mi tid---->24 leo valor:3
+mi tid---->14 leo valor:3
+mi tid---->9 leo valor:3
+mi tid---->11 leo valor:3
+mi tid---->10 leo valor:3
+mi tid---->12 leo valor:3
+mi tid---->2 Cambio valor
+mi tid---->19 leo valor:4
+mi tid---->21 leo valor:4
+mi tid---->22 leo valor:4
+mi tid---->20 leo valor:4
+mi tid---->23 leo valor:4
+mi tid---->4 Cambio valor
+\end{lstlisting}
+
+Vemos que la cantidad de threads creados es la esperada y que no hay mas de uno en la sección crítica. Se incrementa en uno cada vez que se ejecuta
+un escritor, cuando le toca a un lector imprime por pantalla el valor correctamente. Vemos como se van intercalando los lectores con los escritores, 
+esto nos hacer ver que el sistema no va a tener inanición.
+

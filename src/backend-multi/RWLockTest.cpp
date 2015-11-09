@@ -110,5 +110,6 @@ int main(int argc, char* argv[]) {
 	for(int i = 0; i < cant_threads; i++){
 		pthread_join(thread[i], NULL);			//CON ESTO HACEMOS QUE EL THREAD "PRINCIPAL" ESPERE A QUE TERMINEN TODOS LOS THREADS
 		}
+	printf("terminaron todos correctamente\n");
 	return 0;
 }
